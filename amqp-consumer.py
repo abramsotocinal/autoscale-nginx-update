@@ -19,7 +19,7 @@ ipregex = '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\.'\
     '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)\.'\
     '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)'\
 
-#add instances to upstream directive, open config, output to new file, accept IPs as list
+# add instances to upstream directive, open config, output to new file, accept IPs as list
 def appendinstance(fname,wout,asinstances):
     writeout = False
     #Open both files, storing data in fin, writing to fout
@@ -61,26 +61,33 @@ def terminateinstance(fname,wout,terminst):
             else:
                 fout.write(line)
 
-#connect to rabbitmq server
-while True:
-    try:
-        mqconn = pika.BlockingConnection(pika.ConnectionParameters(host=mqserver))
-        break
-    except pika.exceptions.AMQPConnectionError:
-        print 'Can\'t connect to %s' % mqserver
-        print pika.exceptions.AMQPConnectionError
-        print 'Retrying in 5 seconds'
-        sleep(5)
+# Connect to RabbitMQ server AS A FUNCTION, return pika object, implement for final product
+def mqconnect(mqserver):
+    while True:
+        try:
+            mqconn = pika.BlockingConnection(pika.ConnectionParameters(host=mqserver))
+            return mqconn
+            # break
+        except pika.exceptions.AMQPConnectionError:
+            print 'Can\'t connect to %s' % mqserver
+            print 'Retrying in 5 seconds'
+            sleep(5)
+
+# Channel declare AS FUNCTION
+def declarechannel(mqconn, mqueue):
+    while True:
+        try:
+            mqchan = mqconn.channel()
+            mqchan.queue_declare(queue=mqueue)
+            return mqchan
+            # break
+        except pika.exceptions.AMQPChannelError:
+            print 'Channel error: %s \n' % pika.exceptions.AMQPChannelError
+            print 'Retrying in 5 seconds'
+            sleep(5)
 
 
-#Declare channel
-try:
-    mqchan = mqconn.channel()
-    mqchan.queue_declare(queue=mqueue)
-except pika.exceptions.AMQPChannelError:
-    print 'Channel error: %s' % pika.exceptions.AMQPChannelError
-
-#Pika Callback function. Do all stuff here
+# Pika Callback function. Do all stuff here
 def callback(ch, method, properties, body):
     print ' Received: %r' % body
     msg = json.loads(body)
@@ -99,11 +106,20 @@ def callback(ch, method, properties, body):
     #Reload config
     #os.popen('nginx reload')
 
-#Consume message from queue
-mqchan.basic_consume(callback, queue=mqueue, no_ack=True)
+def main():
+    # RabbitMQ server
+    mqserver = '192.168.0.79'
+    # Queue name
+    mqueue = 'Test'
+    mqroutekey = mqueue
 
-print 'Waiting for messages'
+    mqconn = mqconnect(mqserver)
+    mqchan = declarechannel(mqconn, mqueue)
 
-mqchan.start_consuming()
-mqconn.close()
+    mqchan.basic_consume(callback, queue=mqueue, no_ack=True)
+    print 'Waiting for messages'
+    mqchan.start_consuming()
+    mqconn.close()
 
+if __name__ == '__main__':
+    main()
