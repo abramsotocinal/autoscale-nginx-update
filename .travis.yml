@@ -1,7 +1,7 @@
 language: python
 python:
  - "2.7"
-install: pip install -y pika
+install: pip install pika
 script:
  - python amqp-consumer.py
  - python amqp-producer.py
