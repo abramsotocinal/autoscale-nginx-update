@@ -1,23 +1,64 @@
-import pika
 from time import sleep
+from sys import exit
 import os
 import json
 import re
 
+try:
+    import pika
+except ImportError:
+    print 'Cannot load pika module. Please make sure you have it installed and is accessible'
+    exit(1)
+
 #Globals
-mqserver = '192.168.0.79'
-mqchan = ''
-mqueue = 'Test'
+#mqserver = '192.168.0.79'
+#mqueue = 'Test'
 
 #path of nginx config
 fname='nginx.conf'
 #write out to temp config; eventually change to open config file as read write
 wout='new.conf'
 
+
 ipregex = '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\.'\
     '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)\.'\
     '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)\.'\
     '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)'\
+
+# Class for parsing (for now) the application config file(conf.yml)
+# DON'T FULLY IMPLEMENT YET. NOT YET SURE WHERE I'M GOING WITH THIS
+class getconf:
+
+    mqserver = ''
+    mqueue = ''
+
+    def __init__(self, type, conffile='conf.yml'):
+        try:
+            with open(conffile,'r') as stream:
+                ##try:
+                from yaml import load
+                conf = load(stream)
+                if type == 'consumer':
+                    tmpdict = conf['node']['type'][1]['consumer']
+                    self.mqueue = tmpdict['mqueue']
+                    self.mqserver = tmpdict['mqserver']
+                    self.confpath = tmpdict['confpath']
+                    self.confname = tmpdict['confname']
+                elif type == 'agent':
+                    tmpdict = conf['node']['type'][0]['consumer']
+                    self.mqueue = tmpdict['mqueue']
+                    self.mqserver = tmpdict['mqserver']
+
+                ##except ImportError:
+                    ##print ' Unable to import module! Make sure YAML module is installed'
+        except Exception as e:
+            print 'Cannot access file %s! Make sure file exists in the \
+            same directory and has correct permissions' % conffile
+            print str(e)
+
+
+
+
 
 # add instances to upstream directive, open config, output to new file, accept IPs as list
 def appendinstance(fname,wout,asinstances):
@@ -107,10 +148,13 @@ def callback(ch, method, properties, body):
     #os.popen('nginx reload')
 
 def main():
+
+    conf = getconf('consumer','conf.yml')
+
     # RabbitMQ server
-    mqserver = '192.168.0.79'
+    mqserver = conf.mqserver
     # Queue name
-    mqueue = 'Test'
+    mqueue = conf.mqueue
     mqroutekey = mqueue
 
     mqconn = mqconnect(mqserver)
