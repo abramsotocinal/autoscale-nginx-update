@@ -1,0 +1,15 @@
+---
+#Set connection defaults, producer(node) must match consumer
+defaults: &defaults
+ mqserver: '192.168.0.79'
+ mqueue: 'Test'
+ mqchan: ''
+node:
+ type:
+  - agent: 
+     <<: *defaults
+  - consumer:
+     <<: *defaults
+     confpath: '/etc/nginx/'
+     confname: 'ngingx.conf'
+     
