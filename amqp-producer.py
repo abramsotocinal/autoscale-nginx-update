@@ -1,12 +1,9 @@
 import pika
 from time import sleep
-import signal, sys
+import signal
+import sys
 import os
 import json
-
-
-
-
 
 # Get host details, send to MQ server
 def messagebody(action='Launch'):
@@ -22,33 +19,30 @@ def sendmessage(mqchan,mqueue,mqroutekey,mqbody):
     mqchan.basic_publish(exchange='', routing_key=mqroutekey, body=mqbody)
     print '[x] Message sent to AMQP server'
 
-
 # Connect to RabbitMQ server AS A FUNCTION, return pika object, implement for final product
 def mqconnect(mqserver):
     while True:
         try:
             mqconn = pika.BlockingConnection(pika.ConnectionParameters(host=mqserver))
             return mqconn
-            break
+            #break
         except pika.exceptions.AMQPConnectionError:
             print 'Can\'t connect to %s' % mqserver
             print 'Retrying in 5 seconds'
-            time.sleep(5)
+            sleep(5)
 
 #Channel declare AS FUNCTION
-
 def declarechannel(mqconn,mqueue):
     while True:
         try:
             mqchan = mqconn.channel()
             mqchan.queue_declare(queue=mqueue)
             return mqchan
-            break
+            #break
         except pika.exceptions.AMQPChannelError:
             print 'Channel error: %s \n' % pika.exceptions.AMQPChannelError
             print 'Retrying in 5 seconds'
-            time.sleep(5)
-
+            sleep(5)
 
 def main():
     # RabbitMQ server
@@ -72,13 +66,11 @@ def main():
         mqconn.close()
         sys.exit(0)
 
-    #signal.signal(signal.SIGTERM, sigtermhandler)
-    signal.signal(signal.SIGINT, sigtermhandler)
+    signal.signal(signal.SIGTERM, sigtermhandler)
+
     #Keep program running FOREVER, or until system halt
     while True:
         sleep(300)
-
-
 
 if __name__ == '__main__':
 
