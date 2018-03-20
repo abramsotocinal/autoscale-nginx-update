@@ -24,7 +24,7 @@ class Autoscale:
                 self.mqroutekey = defs['mqroutekey']
 
                 # If calling program is the config parser service on LB
-                if type == 'consumer':
+                if type == 'service':
                     tmpdict = conf['node']['type'][1]['consumer']
                     self.confpath = tmpdict['confpath']
                     self.confname = tmpdict['confname']
@@ -48,7 +48,7 @@ class Autoscale:
     # Channel declare; private method
     # uses Pika connection object as parameter
     # return channel object mqchan
-    def __declarechannel__(self, mqconn):
+    def declarechannel(self, mqconn):
         while True:
             try:
                 mqchan = mqconn.channel()
@@ -62,8 +62,7 @@ class Autoscale:
 
     # Send Messgage AS A FUNCTION, implement in final product, messagebody as mqbody
     # Calling declarechannel()
-    def sendmessage(self, mqconn, mqbody):
-        mqchan = self.__declarechannel__(mqconn)
+    def sendmessage(self, mqchan, mqbody):
         mqchan.queue_declare(queue=self.mqueue)
         mqchan.basic_publish(exchange='', routing_key=self.mqroutekey, body=mqbody)
         print '[x] Message sent to AMQP server'

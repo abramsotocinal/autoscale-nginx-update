@@ -22,8 +22,11 @@ def main():
     # Create Pika connection object
     conn = asconnect.mqconnect()
 
-    # Send message to RabbitMQ server with using connection object
-    asconnect.sendmessage(conn, messagebody())
+    # Pika Channel object
+    chan = asconnect.declarechannel(conn)
+
+    # Send message to RabbitMQ server using Pika channel object
+    asconnect.sendmessage(chan, messagebody())
 
     # Catching system signals, still need to implement. Fucking signals. I don't want to make a single class just for
     #  this
