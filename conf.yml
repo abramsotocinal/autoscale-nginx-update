@@ -11,5 +11,5 @@ node:
   - consumer:
      <<: *defaults
      confpath: '/etc/nginx/'
-     confname: 'ngingx.conf'
+     confname: 'nginx.conf'
      
