@@ -1,8 +1,5 @@
 from time import sleep
 from sys import exit
-import os
-import json
-import re
 from includes import Autoscale
 
 try:

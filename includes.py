@@ -2,6 +2,7 @@ from time import sleep
 from yaml import load
 import json
 import os
+import re
 
 try:
     import pika
@@ -75,6 +76,11 @@ class Autoscale:
 
         fname = self.conf
         wout = self.confpath + 'new.conf'
+
+        ipregex = '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\.' \
+                  '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)\.' \
+                  '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)\.' \
+                  '(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2}|0)' \
 
         def appendinstance(fname, wout, asinstances):
             writeout = False
