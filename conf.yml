@@ -3,7 +3,7 @@
 defaults: &defaults
  mqserver: '192.168.0.79'
  mqueue: 'Test'
- mqroutekey: ''
+ mqroutekey: 'Test' # Set route key equal to queue name for now
 node:
  type:
   - agent: 

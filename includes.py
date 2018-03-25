@@ -1,5 +1,7 @@
 from time import sleep
 from yaml import load
+import json
+import os
 
 try:
     import pika
@@ -28,6 +30,7 @@ class Autoscale:
                     tmpdict = conf['node']['type'][1]['consumer']
                     self.confpath = tmpdict['confpath']
                     self.confname = tmpdict['confname']
+                    self.conf = self.confpath + self.confname
         except Exception as e:
             print 'Cannot access file %s! Make sure file exists in the \
             same directory and has correct permissions' % conffile
@@ -66,3 +69,77 @@ class Autoscale:
         mqchan.queue_declare(queue=self.mqueue)
         mqchan.basic_publish(exchange='', routing_key=self.mqroutekey, body=mqbody)
         print '[x] Message sent to AMQP server'
+
+    # receive messages from RabbitMQ server and append/remove instances from nginx.conf
+    def recvmessage(self, mqchan):
+
+        fname = self.conf
+        wout = self.confpath + 'new.conf'
+
+        def appendinstance(fname, wout, asinstances):
+            writeout = False
+            # Open both files, storing data in fin, writing to fout
+            with open(fname, 'r') as fin, open(wout, 'w') as fout:
+                for line in fin.readlines():
+                    # ADD NEW INSTANCES HERE, IN BETWEEN ANCHORS #IPSTART AND #IPEND
+                    if re.match('\#IPSTART', line.strip()):
+                        writeout = True
+                        fout.write(line)
+                    elif re.match('\#IPEND', line.strip()):
+                        writeout = False
+                        fout.write(line)
+                    elif writeout:
+                        fout.write('%s\tserver %s;\n' % (line, asinstances))
+                        writeout = False
+                    else:
+                        fout.write(line)
+
+        def terminateinstance(fname, wout, terminst):
+            writeout = False
+            inst = re.compile(ipregex)
+            with open(fname, 'r') as fin, open(wout, 'w') as fout:
+                lines = fin.readlines()
+                for line in lines:
+                    if re.match('\#IPSTART', line.strip()):
+                        fout.write(line)
+                        writeout = True
+                    elif re.match('\#IPEND', line.strip()):
+                        fout.write(line)
+                        writeout = False
+                    elif writeout:
+                        # if line contains IP in list of terminable instances, don't write to file, and remove from list
+                        # otherwise, write out to file
+                        if inst.search(line.strip()).group() in terminst:
+                            print 'instance removed'
+                            terminst.remove(inst.search(line.strip()).group())
+                        else:
+                            fout.write(line)
+                    else:
+                        fout.write(line)
+
+        def callback(ch, method, properties, body):
+            print ' Received: %r' % body
+            msg = json.loads(body)
+            asinstances = msg['IP'].encode("ascii", "replace")
+
+            print asinstances
+
+            if msg['Action'] == 'Launch':
+                appendinstance(fname, wout, asinstances)
+            elif msg['Action'] == 'Terminate':
+                terminateinstance(fname, wout, asinstances)
+
+            # os.remove(fname)
+            # os.rename(wout, fname)
+
+            # Reload config
+            # os.popen('nginx reload')
+
+        mqchan.basic_consume(callback, self.mqueue, no_ack=True)
+
+        print 'Waiting for messages... '
+
+        mqchan.start_consuming()
+
+
+

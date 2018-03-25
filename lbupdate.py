@@ -166,12 +166,14 @@ def new_main():
     conn = asconnect.mqconnect()
 
     chan = asconnect.declarechannel(conn)
+    ## to be removed
+    #    chan.basic_consume(callback, asconnect.mqueue,no_ack=True)
+    #
+    #    print 'Waiting for messages'
+    #
+    #    chan.start_consuming()
 
-    chan.basic_consume(callback,asconnect.mqueue,no_ack=True)
-
-    print 'Waiting for messages'
-
-    chan.start_consuming()
+    asconnect.recvmessage(chan)
 
     conn.close()
 
