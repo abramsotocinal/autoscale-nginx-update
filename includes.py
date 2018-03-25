@@ -96,13 +96,13 @@ class Autoscale:
                         fout.write(line)
                     elif writeout:
                         fout.write('%s\tserver %s;\n' % (line, asinstances))
-                        writeout = False
                     else:
                         fout.write(line)
 
         def terminateinstance(fname, wout, terminst):
             writeout = False
             inst = re.compile(ipregex)
+
             with open(fname, 'r') as fin, open(wout, 'w') as fout:
                 lines = fin.readlines()
                 for line in lines:
@@ -115,9 +115,9 @@ class Autoscale:
                     elif writeout:
                         # if line contains IP in list of terminable instances, don't write to file, and remove from list
                         # otherwise, write out to file
-                        if inst.search(line.strip()).group() in terminst:
-                            print 'instance removed'
-                            terminst.remove(inst.search(line.strip()).group())
+                        match = inst.search(line.strip())
+                        if match and match.group() in terminst:
+                            print 'instance removed: %s' % match.group()
                         else:
                             fout.write(line)
                     else:
@@ -128,7 +128,7 @@ class Autoscale:
             msg = json.loads(body)
             asinstances = msg['IP'].encode("ascii", "replace")
 
-            print asinstances
+            print msg
 
             if msg['Action'] == 'Launch':
                 appendinstance(fname, wout, asinstances)
