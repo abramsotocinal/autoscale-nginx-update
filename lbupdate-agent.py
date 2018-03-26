@@ -35,10 +35,17 @@ def main():
     # once I've figured it out. fuck it
     def sigtermhandler(signal, frame):
         print 'SIGTERM signal received. Program Terminated'
-        asconnect.sendmessage(conn, messagebody(action='Terminate'))
+        asconnect.sendmessage(chan, messagebody(action='Terminate'))
         conn.close()
-        sys.exit(0)
+        sys.exit(signal)
+    # SIGINT handler for testing; final should be ininterruptible except for SIGINT
+    def siginthandler(signal, frame):
+        print 'SIGINT detected. Agent terminated'
+        asconnect.sendmessage(chan, messagebody(action='Terminate'))
+        conn.close()
+        sys.exit(signal)
 
+    signal.signal(signal.SIGINT, siginthandler)
     signal.signal(signal.SIGTERM, sigtermhandler)
 
     #Keep program running FOREVER, or until system halt

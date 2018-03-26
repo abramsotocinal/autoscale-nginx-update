@@ -84,6 +84,7 @@ class Autoscale:
 
         def appendinstance(fname, wout, asinstances):
             writeout = False
+
             # Open both files, storing data in fin, writing to fout
             with open(fname, 'r') as fin, open(wout, 'w') as fout:
                 for line in fin.readlines():
@@ -96,6 +97,7 @@ class Autoscale:
                         fout.write(line)
                     elif writeout:
                         fout.write('%s\tserver %s;\n' % (line, asinstances))
+                        writeout = False
                     else:
                         fout.write(line)
 
