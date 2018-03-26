@@ -16,6 +16,11 @@ def messagebody(action='Launch'):
 
 def main():
 
+    # Change to working directory
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+
     # Init Autoscale object as 'agent' type
     asconnect = Autoscale('agent')
 
