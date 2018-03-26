@@ -1,7 +1,7 @@
 ---
 #Set connection defaults, producer(node agent) must match consumer(config parser service)
 defaults: &defaults
- mqserver: '172.31.30.122'
+ mqserver: '' #RabbitMQ server
  mqueue: 'Test'
  mqroutekey: 'Test' # Set route key equal to queue name for now
 node:
