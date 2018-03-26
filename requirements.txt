@@ -1,2 +1,2 @@
-pyyaml
-pika
+pyyaml==3.12
+pika==0.11.2
