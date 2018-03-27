@@ -13,6 +13,7 @@ To be updated
 ### Prerequisites
 
 RabbitMQ
+
 Pika client - Defined in the requirement.txt
 
 More to be added
